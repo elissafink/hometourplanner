@@ -888,10 +888,8 @@ function buildRoute() {
 function openInGoogleMaps() {
   const geocoded = homes.filter(h => h.lat && h.lng);
   if (geocoded.length < 1) return;
-  const origin = `${geocoded[0].lat},${geocoded[0].lng}`;
-  const dest = `${geocoded[geocoded.length-1].lat},${geocoded[geocoded.length-1].lng}`;
-  const wps = geocoded.slice(1,-1).map(h=>`${h.lat},${h.lng}`).join('|');
-  const url = `https://www.google.com/maps/dir/${origin}/${wps ? wps + '/' : ''}${dest}`;
+  const stops = geocoded.map(h => encodeURIComponent(h.address)).join('/');
+  const url = `https://www.google.com/maps/dir/${stops}`;
   window.open(url, '_blank');
 }
 

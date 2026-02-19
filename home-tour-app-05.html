@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Tour Planner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fffdf8;
+    --surface2: #f0ebe0;
+    --accent: #2d5a3d;
+    --accent2: #c8a96e;
+    --text: #1a1a14;
+    --text-muted: #7a7060;
+    --border: #ddd8cc;
+    --danger: #c0392b;
+    --shadow: 0 2px 20px rgba(0,0,0,0.08);
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  header span {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    font-weight: 300;
+  }
+
+  .app-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    height: calc(100vh - 64px);
+  }
+
+  /* LEFT PANEL */
+  .left-panel {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .url-input-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .url-input-group input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+
+  .url-input-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  button.btn-primary {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  button.btn-primary:hover { background: #234a30; }
+  button.btn-primary:active { transform: scale(0.97); }
+
+  button.btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid var(--accent);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  button.btn-secondary:hover {
+    background: var(--accent);
+    color: white;
+  }
+
+  button.btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button.btn-danger:hover { background: #ffeaea; }
+
+  .homes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+  }
+
+  .home-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .home-card:hover {
+    border-color: var(--accent2);
+    box-shadow: var(--shadow);
+  }
+
+  .home-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45,90,61,0.1);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .card-num {
+    background: var(--accent);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .card-address {
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .card-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .rating-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .rating-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .rating-btn.active-love { background: #e8f5e9; border-color: #4caf50; color: #2e7d32; }
+  .rating-btn.active-maybe { background: #fff8e1; border-color: #ffc107; color: #f57f17; }
+  .rating-btn.active-no { background: #ffebee; border-color: #ef9a9a; color: #c62828; }
+
+  .card-notes {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    background: var(--bg);
+    color: var(--text);
+    resize: vertical;
+    min-height: 56px;
+    transition: border-color 0.2s;
+  }
+
+  .card-notes:focus { outline: none; border-color: var(--accent); }
+  .card-notes::placeholder { color: var(--text-muted); }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .zillow-link {
+    color: var(--accent2);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .zillow-link:hover { text-decoration: underline; }
+
+  /* Detail/Edit Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  /* RIGHT PANEL - Map */
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .map-toolbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .map-toolbar span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  #map {
+    flex: 1;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    gap: 12px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .empty-state .icon {
+    font-size: 3rem;
+    opacity: 0.4;
+  }
+
+  .empty-state p {
+    font-size: 0.95rem;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .counter {
+    background: var(--accent2);
+    color: white;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .panel-actions {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    background: var(--surface2);
+    flex-wrap: wrap;
+  }
+
+  .btn-clear {
+    background: transparent;
+    color: var(--danger);
+    border: 1.5px solid var(--danger);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-clear:hover {
+    background: var(--danger);
+    color: white;
+  }
+
+  /* Info window styling */
+  .iw-content { font-family: 'DM Sans', sans-serif; max-width: 240px; }
+  .iw-content h3 { font-family: 'Playfair Display', serif; font-size: 1rem; color: #2d5a3d; margin-bottom: 4px; }
+  .iw-content .iw-price { font-weight: 600; color: #c8a96e; font-size: 0.95rem; }
+  .iw-content .iw-meta { font-size: 0.8rem; color: #7a7060; margin: 4px 0; }
+  .iw-content a { color: #2d5a3d; font-size: 0.82rem; font-weight: 500; }
+  .iw-content .iw-notes { font-size: 0.8rem; color: #555; margin-top: 6px; font-style: italic; border-top: 1px solid #eee; padding-top: 6px; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--accent);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 9999;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .api-setup {
+    background: #fff8e8;
+    border: 1.5px solid var(--accent2);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 16px;
+  }
+
+  .api-setup p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5; }
+
+  @media (max-width: 768px) {
+    .app-grid { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .left-panel { max-height: 50vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏡 Home Tour Planner</h1>
+  <span id="home-count-header">0 of 10 homes added</span>
+</header>
+
+<div class="app-grid">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <!-- API Key Setup -->
+    <div class="panel-section" id="api-setup-section">
+      <h2>⚙️ Google Maps API Key</h2>
+      <div class="api-setup">
+        <p>Enter your Google Maps API key once to enable the map and routing.</p>
+        <div class="url-input-group">
+          <input type="text" id="api-key-input" placeholder="Paste your API key here..." />
+          <button class="btn-primary" onclick="saveApiKey()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Home -->
+    <div class="panel-section">
+      <h2>Add a Home</h2>
+      <div class="url-input-group">
+        <input type="text" id="zillow-url-input" placeholder="Paste Zillow or Redfin URL..." />
+        <button class="btn-primary" onclick="parseUrl()">Add</button>
+      </div>
+    </div>
+
+    <!-- Homes List -->
+    <div class="homes-list" id="homes-list">
+      <div style="text-align:center; color:var(--text-muted); padding: 30px 20px; font-size:0.9rem; line-height:1.6;">
+        Paste a listing URL above to add your first home. You can save up to <strong>10</strong>.
+      </div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="panel-actions">
+      <button class="btn-primary" onclick="buildRoute()" style="flex:1">🗺️ Build Driving Route</button>
+      <button class="btn-secondary" onclick="exportPDF()">📄 Save PDF</button>
+      <button class="btn-secondary" onclick="exportList()">📋 Export TXT</button>
+      <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL - Map -->
+  <div class="right-panel">
+    <div class="map-toolbar">
+      <span id="route-status">Add homes and click "Build Driving Route" to start.</span>
+      <button class="btn-secondary" onclick="openInGoogleMaps()" id="gmaps-btn" style="display:none">Open in Google Maps ↗</button>
+    </div>
+    <div id="map">
+      <div class="empty-state">
+        <div class="icon">🗺️</div>
+        <p>Your map will appear here once you save your API key and add some homes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal">
+    <h2 id="modal-title">Add Home Details</h2>
+    <div class="form-group">
+      <label>Address</label>
+      <input type="text" id="f-address" placeholder="123 Main St, City, State ZIP" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Price</label>
+        <input type="text" id="f-price" placeholder="$850,000" />
+      </div>
+      <div class="form-group">
+        <label>Sq Ft</label>
+        <input type="text" id="f-sqft" placeholder="2,400" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Beds</label>
+        <input type="number" id="f-beds" placeholder="4" min="0" max="20" />
+      </div>
+      <div class="form-group">
+        <label>Baths</label>
+        <input type="number" id="f-baths" placeholder="3" min="0" max="20" step="0.5" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <textarea id="f-notes" placeholder="First impressions, things to check, questions for agent..." rows="3"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveHome()">Save Home</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let homes = JSON.parse(localStorage.getItem('htp-homes') || '[]');
+let apiKey = localStorage.getItem('htp-apikey') || '';
+let map, geocoder, directionsService, directionsRenderer, markers = [];
+let editingIndex = -1;
+let pendingHome = null;
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+function init() {
+  if (apiKey) {
+    document.getElementById('api-key-input').value = apiKey;
+    loadGoogleMaps();
+  }
+  renderHomes();
+  updateHeader();
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) return showToast('Please enter an API key');
+  apiKey = key;
+  localStorage.setItem('htp-apikey', key);
+  showToast('API key saved!');
+  loadGoogleMaps();
+}
+
+function loadGoogleMaps() {
+  const old = document.getElementById('gmaps-script');
+  if (old) old.remove();
+  const s = document.createElement('script');
+  s.id = 'gmaps-script';
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&v=weekly`;
+  s.async = true;
+  s.defer = true;
+  s.onerror = () => showToast('Error loading Maps. Check your API key & restrictions.');
+  document.head.appendChild(s);
+}
+
+function clearAll() {
+  if (homes.length === 0) return showToast('Nothing to clear');
+  if (!confirm('Clear all homes and start fresh? This cannot be undone.')) return;
+  homes = [];
+  save();
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  if (directionsRenderer) directionsRenderer.setDirections({ routes: [] });
+  document.getElementById('route-status').textContent = 'Add homes and click "Build Driving Route" to start.';
+  document.getElementById('gmaps-btn').style.display = 'none';
+  renderHomes();
+  updateHeader();
+  showToast('All homes cleared');
+}
+
+window.initMap = function() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 36.1699, lng: -115.1398 },
+    zoom: 11,
+    styles: [
+      { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit', stylers: [{ visibility: 'off' }] }
+    ]
+  });
+  geocoder = new google.maps.Geocoder();
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers: false,
+    polylineOptions: { strokeColor: '#2d5a3d', strokeWeight: 4 }
+  });
+  directionsRenderer.setMap(map);
+  renderMarkers();
+};
+
+// ─── URL Parsing ─────────────────────────────────────────────────────────────
+function parseUrl() {
+  const url = document.getElementById('zillow-url-input').value.trim();
+  if (!url) return showToast('Please paste a listing URL');
+  if (homes.length >= 10) return showToast('Maximum 10 homes reached');
+
+  let address = '';
+
+  // Try to extract address from Zillow URL
+  // Format: /homedetails/123-Main-St-City-State-ZIP/
+  const zillowMatch = url.match(/homedetails\/([^\/]+)\//);
+  if (zillowMatch) {
+    const slug = zillowMatch[1];
+    // Remove trailing zpid stuff
+    const clean = slug.replace(/-?\d+_zpid$/, '').replace(/-/g, ' ');
+    address = clean;
+  }
+
+  // Try Redfin
+  // Format: /CA/San-Francisco/123-Main-St-94102/
+  const redfinMatch = url.match(/redfin\.com\/[A-Z]{2}\/[^\/]+\/([^\/]+)\//);
+  if (redfinMatch && !address) {
+    address = redfinMatch[1].replace(/-/g, ' ');
+  }
+
+  pendingHome = { url, address, price: '', beds: '', baths: '', sqft: '', notes: '', rating: '' };
+  openModal(-1, address);
+  document.getElementById('zillow-url-input').value = '';
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function openModal(index, prefillAddress) {
+  editingIndex = index;
+  const h = index >= 0 ? homes[index] : (pendingHome || {});
+  document.getElementById('modal-title').textContent = index >= 0 ? 'Edit Home Details' : 'Confirm Home Details';
+  document.getElementById('f-address').value = h.address || prefillAddress || '';
+  document.getElementById('f-price').value = h.price || '';
+  document.getElementById('f-beds').value = h.beds || '';
+  document.getElementById('f-baths').value = h.baths || '';
+  document.getElementById('f-sqft').value = h.sqft || '';
+  document.getElementById('f-notes').value = h.notes || '';
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  pendingHome = null;
+  editingIndex = -1;
+}
+
+function saveHome() {
+  const address = document.getElementById('f-address').value.trim();
+  if (!address) return showToast('Please enter an address');
+
+  const data = {
+    address,
+    price: document.getElementById('f-price').value.trim(),
+    beds: document.getElementById('f-beds').value.trim(),
+    baths: document.getElementById('f-baths').value.trim(),
+    sqft: document.getElementById('f-sqft').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    rating: editingIndex >= 0 ? homes[editingIndex].rating : (pendingHome?.rating || ''),
+    url: editingIndex >= 0 ? homes[editingIndex].url : (pendingHome?.url || ''),
+  };
+
+  if (editingIndex >= 0) {
+    homes[editingIndex] = data;
+  } else {
+    homes.push(data);
+    // Geocode and add marker
+    geocodeHome(homes.length - 1);
+  }
+
+  save();
+  closeModal();
+  renderHomes();
+  updateHeader();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderHomes() {
+  const list = document.getElementById('homes-list');
+  if (homes.length === 0) {
+    list.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:30px 20px; font-size:0.9rem; line-height:1.6;">Paste a listing URL above to add your first home. You can save up to <strong>10</strong>.</div>';
+    return;
+  }
+
+  list.innerHTML = homes.map((h, i) => `
+    <div class="home-card" id="card-${i}" onclick="focusHome(${i})">
+      <div class="card-header">
+        <div class="card-num">${i+1}</div>
+        <div class="card-address">${h.address}</div>
+        <button class="btn-danger" onclick="event.stopPropagation(); removeHome(${i})">✕</button>
+      </div>
+      ${h.price ? `<div class="card-price">${h.price}</div>` : ''}
+      <div class="card-meta">
+        ${h.beds ? `<span>🛏 ${h.beds} bd</span>` : ''}
+        ${h.baths ? `<span>🚿 ${h.baths} ba</span>` : ''}
+        ${h.sqft ? `<span>📐 ${h.sqft} sf</span>` : ''}
+      </div>
+      <div class="rating-row">
+        <span style="font-size:0.78rem; color:var(--text-muted); margin-right:4px;">Rate:</span>
+        <button class="rating-btn ${h.rating==='love'?'active-love':''}" onclick="event.stopPropagation(); setRating(${i},'love')">❤️ Love it</button>
+        <button class="rating-btn ${h.rating==='maybe'?'active-maybe':''}" onclick="event.stopPropagation(); setRating(${i},'maybe')">🤔 Maybe</button>
+        <button class="rating-btn ${h.rating==='no'?'active-no':''}" onclick="event.stopPropagation(); setRating(${i},'no')">👎 No</button>
+      </div>
+      <textarea class="card-notes" placeholder="Notes & impressions..." onclick="event.stopPropagation()" onchange="updateNotes(${i}, this.value)">${h.notes || ''}</textarea>
+      <div class="card-actions">
+        ${h.url ? `<a class="zillow-link" href="${h.url}" target="_blank">🔗 View Full Listing ↗</a>` : '<span></span>'}
+        <button class="btn-secondary" onclick="event.stopPropagation(); openModal(${i})">Edit</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateHeader() {
+  document.getElementById('home-count-header').textContent = `${homes.length} of 10 homes added`;
+}
+
+// ─── Ratings & Notes ──────────────────────────────────────────────────────────
+function setRating(i, rating) {
+  homes[i].rating = homes[i].rating === rating ? '' : rating;
+  save();
+  renderHomes();
+}
+
+function updateNotes(i, val) {
+  homes[i].notes = val;
+  save();
+}
+
+// ─── Map & Geocoding ──────────────────────────────────────────────────────────
+function geocodeHome(i) {
+  if (!geocoder) return;
+  geocoder.geocode({ address: homes[i].address }, (results, status) => {
+    if (status === 'OK') {
+      homes[i].lat = results[0].geometry.location.lat();
+      homes[i].lng = results[0].geometry.location.lng();
+      save();
+      addMarker(i);
+    } else {
+      showToast('Could not find address on map. Check the address.');
+    }
+  });
+}
+
+function addMarker(i) {
+  if (!map || !homes[i].lat) return;
+  const h = homes[i];
+  const marker = new google.maps.Marker({
+    position: { lat: h.lat, lng: h.lng },
+    map,
+    label: { text: String(i+1), color: 'white', fontWeight: 'bold', fontSize: '12px' },
+    title: h.address
+  });
+
+  const iw = new google.maps.InfoWindow({
+    content: `
+      <div class="iw-content">
+        <h3>${h.address}</h3>
+        ${h.price ? `<div class="iw-price">${h.price}</div>` : ''}
+        <div class="iw-meta">${[h.beds?h.beds+' bd':'', h.baths?h.baths+' ba':'', h.sqft?h.sqft+' sf':''].filter(Boolean).join(' · ')}</div>
+        ${h.url ? `<a href="${h.url}" target="_blank">View Full Listing ↗</a>` : ''}
+        ${h.notes ? `<div class="iw-notes">${h.notes}</div>` : ''}
+      </div>
+    `
+  });
+
+  marker.addListener('click', () => {
+    markers.forEach(m => m._iw && m._iw.close());
+    iw.open(map, marker);
+    document.getElementById(`card-${i}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  marker._iw = iw;
+  markers.push(marker);
+  map.panTo({ lat: h.lat, lng: h.lng });
+}
+
+function renderMarkers() {
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+  homes.forEach((h, i) => {
+    if (h.lat && h.lng) addMarker(i);
+    else if (geocoder) geocodeHome(i);
+  });
+}
+
+function focusHome(i) {
+  if (!map || !homes[i]?.lat) return;
+  map.panTo({ lat: homes[i].lat, lng: homes[i].lng });
+  map.setZoom(16);
+  markers[i]?._iw?.open(map, markers[i]);
+}
+
+function buildRoute() {
+  const geocoded = homes.filter(h => h.lat && h.lng);
+  if (geocoded.length < 2) return showToast('Add at least 2 homes with valid addresses to build a route');
+  if (!directionsService) return showToast('Map not loaded yet. Please save your API key first.');
+
+  const waypoints = geocoded.slice(1, -1).map(h => ({
+    location: { lat: h.lat, lng: h.lng },
+    stopover: true
+  }));
+
+  directionsService.route({
+    origin: { lat: geocoded[0].lat, lng: geocoded[0].lng },
+    destination: { lat: geocoded[geocoded.length-1].lat, lng: geocoded[geocoded.length-1].lng },
+    waypoints,
+    travelMode: google.maps.TravelMode.DRIVING,
+    optimizeWaypoints: true
+  }, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+      document.getElementById('route-status').textContent = `Route built for ${geocoded.length} homes ✓`;
+      document.getElementById('gmaps-btn').style.display = 'inline-block';
+    } else {
+      showToast('Could not build route: ' + status);
+    }
+  });
+}
+
+function openInGoogleMaps() {
+  const geocoded = homes.filter(h => h.lat && h.lng);
+  if (geocoded.length < 1) return;
+  const stops = geocoded.map(h => encodeURIComponent(h.address)).join('/');
+  const url = `https://www.google.com/maps/dir/${stops}`;
+  window.open(url, '_blank');
+}
+
+function removeHome(i) {
+  if (!confirm(`Remove "${homes[i].address}"?`)) return;
+  homes.splice(i, 1);
+  save();
+  renderHomes();
+  renderMarkers();
+  updateHeader();
+}
+
+function exportPDF() {
+  if (homes.length === 0) return showToast('No homes to export');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+
+  const margin = 48;
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const contentW = pageW - margin * 2;
+  let y = margin;
+
+  const ratingLabel = { love: '❤️ Love it', maybe: '🤔 Maybe', no: '👎 No', '': 'Not rated' };
+
+  // ── Header ──
+  doc.setFillColor(45, 90, 61);
+  doc.rect(0, 0, pageW, 70, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Home Tour Planner', margin, 40);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generated ${new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}  ·  ${homes.length} home${homes.length !== 1 ? 's' : ''}`, margin, 58);
+  y = 95;
+
+  // ── Route summary ──
+  const geocoded = homes.filter(h => h.lat && h.lng);
+  if (geocoded.length >= 2) {
+    doc.setFillColor(240, 235, 224);
+    doc.roundedRect(margin, y, contentW, 28, 4, 4, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(45, 90, 61);
+    doc.text('DRIVING ORDER', margin + 12, y + 12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 70, 55);
+    const routeText = geocoded.map((h, i) => `${i+1}. ${h.address.split(',')[0]}`).join('   →   ');
+    const wrapped = doc.splitTextToSize(routeText, contentW - 24);
+    doc.text(wrapped[0], margin + 12, y + 22);
+    y += 44;
+  }
+
+  // ── Each home ──
+  homes.forEach((h, i) => {
+    const blockH = 130 + (h.notes ? Math.min(h.notes.length / 3, 60) : 0);
+    if (y + blockH > pageH - margin) { doc.addPage(); y = margin; }
+
+    // Card background
+    doc.setFillColor(255, 253, 248);
+    doc.setDrawColor(221, 216, 204);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, contentW, blockH, 6, 6, 'FD');
+
+    // Number badge
+    doc.setFillColor(45, 90, 61);
+    doc.circle(margin + 20, y + 20, 12, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.text(String(i + 1), margin + 20, y + 24, { align: 'center' });
+
+    // Address
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(26, 26, 20);
+    doc.text(h.address, margin + 38, y + 24);
+
+    // Price
+    let detailY = y + 44;
+    if (h.price) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(45, 90, 61);
+      doc.text(h.price, margin + 14, detailY);
+      detailY += 18;
+    }
+
+    // Beds / baths / sqft
+    const meta = [h.beds ? `${h.beds} bd` : '', h.baths ? `${h.baths} ba` : '', h.sqft ? `${h.sqft} sf` : ''].filter(Boolean).join('   ·   ');
+    if (meta) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(100, 90, 75);
+      doc.text(meta, margin + 14, detailY);
+      detailY += 16;
+    }
+
+    // Rating
+    const rText = h.rating ? `Rating: ${h.rating.toUpperCase()}` : 'Rating: Not yet rated';
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(120, 110, 95);
+    doc.text(rText, margin + 14, detailY);
+    detailY += 14;
+
+    // Notes
+    if (h.notes) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(60, 55, 45);
+      doc.text('Notes:', margin + 14, detailY);
+      detailY += 12;
+      const noteLines = doc.splitTextToSize(h.notes, contentW - 28);
+      doc.text(noteLines, margin + 14, detailY);
+      detailY += noteLines.length * 11;
+    }
+
+    // Zillow link
+    if (h.url) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(200, 169, 110);
+      const shortUrl = h.url.length > 70 ? h.url.substring(0, 67) + '...' : h.url;
+      doc.textWithLink('🔗 View Listing', margin + 14, detailY + 8, { url: h.url });
+    }
+
+    y += blockH + 14;
+  });
+
+  // ── Footer on last page ──
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(180, 170, 155);
+  doc.text('Generated by Home Tour Planner', pageW / 2, pageH - 24, { align: 'center' });
+
+  doc.save(`home-tour-${new Date().toISOString().slice(0,10)}.pdf`);
+  showToast('PDF saved!');
+}
+
+
+function exportList() {
+  if (homes.length === 0) return showToast('No homes to export');
+  const lines = homes.map((h, i) => [
+    `${i+1}. ${h.address}`,
+    h.price ? `   Price: ${h.price}` : '',
+    (h.beds || h.baths) ? `   ${h.beds ? h.beds+' bd' : ''} ${h.baths ? h.baths+' ba' : ''} ${h.sqft ? h.sqft+' sf' : ''}` : '',
+    h.rating ? `   Rating: ${h.rating}` : '',
+    h.notes ? `   Notes: ${h.notes}` : '',
+    h.url ? `   Link: ${h.url}` : '',
+    ''
+  ].filter(Boolean).join('\n')).join('\n');
+
+  const blob = new Blob([lines], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'home-tour-list.txt';
+  a.click();
+}
+
+function save() {
+  localStorage.setItem('htp-homes', JSON.stringify(homes));
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+init();
+</script>
+</body>
+</html>
